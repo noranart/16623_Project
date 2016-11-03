@@ -25,10 +25,15 @@ On the implementation part, torch-ios is an outdated framework. Since this a sin
 
 ##Schedule
 **Nov 6:** Finished project proposal
+
 **Nov 13:** Literature review on model compression
-**Nov 20:** Start training Student model. Attempt to build torch-ios.
-**Nov 27:** Reconcile outputs of torch-ios, and current torch7.
-**Dec 3:** Finished training Student model.
+
+**Nov 20:** Start training Student model. Attempt to build torch-ios
+
+**Nov 27:** Reconcile outputs of torch-ios, and current torch7
+
+**Dec 3:** Finished training Student model
+
 **Dec 8:** Finished presentation, write up
 
 ##Reference
