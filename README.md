@@ -24,17 +24,23 @@ On the implementation part, torch-ios is an outdated framework. Since this a sin
 **How Realistic:** The model should definitely be finished in 1 month, but whether I could make the entire framework running on iPad is still unknown.
 
 ##Schedule
-**Nov 6:** Finished project proposal
+**Nov 6:** Finished project proposal	[Done]
 
-**Nov 13:** Literature review on model compression
+**Nov 13:** Literature review on model compression. Attempt to build torch-ios	[Done]
 
-**Nov 20:** Start training Student model. Attempt to build torch-ios
+**Nov 16:** Explore Deep Learning Kit	as alternative choice, create iOS project with HOGSVM as pedestrian detection proposal 	[Done]
+
+**Nov 20:** Start training Student model. [Done: Torch model, Tentative: Caffe model]
+
+**Nov 23:** Attempt to fix crashed layers in torch-ios
 
 **Nov 27:** Reconcile outputs of torch-ios, and current torch7
 
-**Dec 3:** Finished training Student model
+**Nov 30:** Attempt to port the project to iPad
 
-**Dec 8:** Finished presentation, write up
+**Dec 3:** Finalize the project, gather results/issues for report
+
+**Dec 8:** Finished presentation, finish report
 
 ##Reference
 [1] G. Hinton, O. Vinyals, and J. Dean. Distilling the knowledge in a neural network. arXiv preprint arXiv:1503.02531, 2015.
