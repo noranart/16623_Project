@@ -74,6 +74,12 @@
 #include "generic/SpatialConvolution.c"
 #include "THGenerateFloatTypes.h"
 
+#include "generic/SpatialBatchNormalization.c"
+#include "THGenerateFloatTypes.h"
+
+#include "generic/SpatialAveragePooling.c"
+#include "THGenerateFloatTypes.h"
+
 #include "generic/SpatialFullConvolution.c"
 #include "THGenerateFloatTypes.h"
 
@@ -150,6 +156,7 @@ int luaopen_libnn(lua_State *L)
   nn_FloatMultiLabelMarginCriterion_init(L);
   nn_FloatL1Cost_init(L);
 
+    
   nn_DoubleMin_init(L);
   nn_DoubleMax_init(L);
   nn_DoubleExp_init(L);
@@ -184,6 +191,12 @@ int luaopen_libnn(lua_State *L)
   nn_DoubleMultiMarginCriterion_init(L);
   nn_DoubleMultiLabelMarginCriterion_init(L);
   nn_DoubleL1Cost_init(L);
+    
+    nn_FloatSpatialBatchNormalization_init(L);
+    nn_FloatSpatialAveragePooling_init(L);
+    nn_DoubleSpatialBatchNormalization_init(L);
+    nn_DoubleSpatialAveragePooling_init(L);
+    
 
   return 1;
 }
