@@ -22,38 +22,22 @@ class ViewController: UIViewController {
         
         deepNetwork = DeepNetwork()
         
-        // conv1.json contains a cifar 10 image of a cat
-        let conv1Layer = deepNetwork.loadJSONFile("conv1")!
-        let image: [Float] = conv1Layer["input"] as! [Float]
         
-        // shows a tiny (32x32) CIFAR 10 image on screen
-        showCIFARImage(image)
+
         
         
-        var randomimage = createFloatNumbersArray(image.count)
+        var randomimage = createFloatNumbersArray(3*224*224)
         for i in 0..<randomimage.count {
-            randomimage[i] = Float(arc4random_uniform(1000))
+            randomimage[i] = Float(arc4random_uniform(255))//255.0
         }
         
-        let imageShape:[Float] = [1.0, 3.0, 32.0, 32.0]
-        
+        let imageShape:[Float] = [1.0, 3.0, 224.0, 224.0]
         let caching_mode = false
         
-        // 0. load network in network model
-        deepNetwork.loadDeepNetworkFromJSON("nin_cifar10_full", inputImage: image, inputShape: imageShape, caching_mode:caching_mode)
-        
-        // 1. classify image (of cat)
-        deepNetwork.classify(image)
-        
-        
         // 2. reset deep network and classify random image
-        deepNetwork.loadDeepNetworkFromJSON("nin_cifar10_full", inputImage: randomimage, inputShape: imageShape,caching_mode:caching_mode)
+        deepNetwork.loadDeepNetworkFromJSON("student", inputImage: randomimage, inputShape: imageShape, caching_mode:caching_mode)
         deepNetwork.classify(randomimage)
-        
-        // 3. reset deep network and classify cat image again
-        deepNetwork.loadDeepNetworkFromJSON("nin_cifar10_full", inputImage: image, inputShape: imageShape,caching_mode:caching_mode)
-        deepNetwork.classify(image)
-        
+        showCIFARImage(randomimage)
         //exit(0)
     }
     
@@ -66,7 +50,7 @@ class ViewController: UIViewController {
     
     func showCIFARImage(cifarImageData:[Float]) {
         var cifarImageData = cifarImageData
-        let size = CGSize(width: 32, height: 32)
+        let size = CGSize(width: 224, height: 224)
         let rect = CGRect(origin: CGPoint(x: 0,y: 0), size: size)
         
         UIGraphicsBeginImageContextWithOptions(size, false, 0)
@@ -82,9 +66,9 @@ class ViewController: UIViewController {
         // blue: numbers from position 2048 to 3072 (not inclusive)
         for i in 0..<32 {
             for j in 0..<32 {
-                let r = UInt8(cifarImageData[i*32 + j])
-                let g = UInt8(cifarImageData[32*32 + i*32 + j])
-                let b = UInt8(cifarImageData[2*32*32 + i*32 + j])
+                let r = UInt8(cifarImageData[i*224 + j])
+                let g = UInt8(cifarImageData[224*224 + i*224 + j])
+                let b = UInt8(cifarImageData[2*224*224 + i*224 + j])
                 
                 // used to set pixels - RGBA into an UIImage
                 // for more info about RGBA check out https://en.wikipedia.org/wiki/RGBA_color_space
@@ -97,7 +81,7 @@ class ViewController: UIViewController {
         print(image.size)
         
         // Displaying original image.
-        let originalImageView:UIImageView = UIImageView(frame: CGRectMake(20, 20, image.size.width, image.size.height))
+        let originalImageView:UIImageView = UIImageView(frame: CGRectMake(20, 20, 10*image.size.width, 10*image.size.height))
         originalImageView.image = image
         self.view.addSubview(originalImageView)
     }

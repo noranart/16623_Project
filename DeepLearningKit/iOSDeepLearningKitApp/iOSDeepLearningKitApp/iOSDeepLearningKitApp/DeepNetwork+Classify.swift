@@ -38,9 +38,10 @@ public extension DeepNetwork {
         
         
         // TODO: fix hardcoding better..
-        var output =  [Float](count: 10, repeatedValue: 0.0)
+        var output =  [Float](count: 100, repeatedValue: 0.0)
         
-        let (lastLayerName, lastMetalBuffer) = namedDataLayers.last!
+        let (lastLayerName, lastMetalBuffer) = namedDataLayers[7]
+        print(namedDataLayers)
         NSLog(lastLayerName)
         let data = NSData(bytesNoCopy: lastMetalBuffer.contents(),
             length: output.count*sizeof(Float), freeWhenDone: false)
