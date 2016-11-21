@@ -9,10 +9,16 @@ static int nn_(Threshold_updateOutput)(lua_State *L)
   real threshold = luaT_getfieldchecknumber(L, 1, "threshold");
   THTensor *output = luaT_getfieldcheckudata(L, 1, "output", torch_Tensor);
   
-  THTensor_(resizeAs)(output, input);
-  TH_TENSOR_APPLY2(real, output, real, input, \
-                  *output_data = (*input_data > threshold) ? *input_data : val;);
+    
+            TH_TENSOR_APPLY(real, input,
+                            if (*input_data <= threshold)
+                            *input_data = val;
+                            );
+            THTensor_(set)(output, input);
 
+    
+    
+    
   return 1;
 }
 
