@@ -101,3 +101,7 @@ torch.include('nn','StochasticGradient.lua')
 
 torch.include('nn','Jacobian.lua')
 torch.include('nn','hessian.lua')
+
+torch.include('nn','SpatialBatchNormalization.lua')
+torch.include('nn','SpatialAveragePooling.lua')
+torch.include('nn','View.lua')
