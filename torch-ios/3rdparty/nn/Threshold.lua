@@ -10,7 +10,18 @@ function Threshold:__init(th,v)
 end
 
 function Threshold:updateOutput(input)
+   
+   	print('#### thres in ####')
+	print(#input)
+	print('#### end thres in ####')
+	
    input.nn.Threshold_updateOutput(self, input)
+   
+    print('#### thres out ####')
+	print(#self.output)
+	print('#### end thres out ####')
+
+   
    return self.output
 end
 

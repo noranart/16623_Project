@@ -1,6 +1,11 @@
 local Identity, parent = torch.class('nn.Identity', 'nn.Module')
 
 function Identity:updateOutput(input)
+
+	print('#### identity ####')
+	print(#input)
+	print('#### end identity ####')
+
    self.output = input
    return self.output
 end
