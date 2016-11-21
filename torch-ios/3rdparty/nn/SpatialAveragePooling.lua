@@ -44,33 +44,9 @@ local function backwardCompatible(self)
 end
 
 function SpatialAveragePooling:updateOutput(input)
---[[
-   backwardCompatible(self)
-   input.THNN.SpatialAveragePooling_updateOutput(
-      input:cdata(),
-      self.output:cdata(),
-      self.kW, self.kH,
-      self.dW, self.dH,
-      self.padW, self.padH,
-      self.ceil_mode,
-      self.count_include_pad
-   )
-   -- for backward compatibility with saved models
-   -- which are not supposed to have "divide" field
-   if not self.divide then
-     self.output:mul(self.kW*self.kH)
-   end
-   return self.output
-   ]]--
-    print('#### avg in ####')
-	print(#input)
-	print('#### end avg in ####')
 	
    input.nn.SpatialAveragePooling_updateOutput(self, input)
   
-  	print('#### avg out ####')
-	print(self.output)
-	print('#### end avg out ####')
 
    
    return self.output

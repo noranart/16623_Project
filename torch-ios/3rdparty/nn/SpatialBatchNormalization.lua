@@ -51,22 +51,7 @@ function BN:__init(nOutput, eps, momentum, affine)
 end
 
 function BN:updateOutput(input)
-   	print('#### batch in ####')
-	print(#input)
-	print('#### end batch in ####')
-	
    input.nn.SpatialBatchNormalization_updateOutput(self, input)
-  
-  	print('#### batch out ####')
-	--print(#self.output)
-	print(self.output[1][1][1][1])
-	print(self.output[1][1][1][2])
-	print(self.output[1][1][1][3])
-	print(self.output[1][1][1][4])
-	print(self.output[1][1][1][5])
-
-	--print(self.output:narrow(1,1,1))
-	print('#### end batch out ####')
 
    
    return self.output

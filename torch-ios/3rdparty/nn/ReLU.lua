@@ -9,23 +9,8 @@ function ReLU:__init()
 
 end
 
-function ReLU:updateOutput(input)
-   
-   	print('#### RELU in ####')
-	print(#input)
-	print('#### end RELU in ####')
-	
+function ReLU:updateOutput(input)	
    input.nn.Threshold_updateOutput(self, input)
-   
-    print('#### RELU out ####')
-	--print(#self.output)
-	print(self.output[1][1][1][1])
-	print(self.output[1][1][1][2])
-	print(self.output[1][1][1][3])
-	print(self.output[1][1][1][4])
-	print(self.output[1][1][1][5])
-
-	print('#### end RELU out ####')
 
    
    return self.output

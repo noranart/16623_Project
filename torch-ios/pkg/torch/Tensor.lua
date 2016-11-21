@@ -7,8 +7,14 @@ local Tensor = {}
 -- types
 local types = {'Byte', 'Char', 'Short', 'Int', 'Long', 'Float', 'Double'}
 
+-- Lua 5.2 compatibility
+local log10 = math.log10 or function(x) return math.log(x, 10) end
+
 -- tostring() functions for Tensor and Storage
 local function Storage__printformat(self)
+   if self:size() == 0 then 
+     return "", nil, 0
+   end
    local intMode = true
    local type = torch.typename(self)
 --   if type == 'torch.FloatStorage' or type == 'torch.DoubleStorage' then
@@ -22,11 +28,15 @@ local function Storage__printformat(self)
    local tensor = torch.DoubleTensor(torch.DoubleStorage(self:size()):copy(self), 1, self:size()):abs()
    local expMin = tensor:min()
    if expMin ~= 0 then
-      expMin = math.floor(math.log10(expMin)) + 1
+      expMin = math.floor(log10(expMin)) + 1
+   else
+      expMin = 1
    end
    local expMax = tensor:max()
    if expMax ~= 0 then
-      expMax = math.floor(math.log10(expMax)) + 1
+      expMax = math.floor(log10(expMax)) + 1
+   else
+      expMax = 1
    end
 
    local format
@@ -70,7 +80,7 @@ local function Storage__printformat(self)
 end
 
 function Storage.__tostring__(self)
-   local strt = {'\n'}
+   local strt = {}
    local format,scale = Storage__printformat(self)
    if format:sub(2,4) == 'nan' then format = '%f' end
    if scale then
@@ -180,12 +190,10 @@ local function Tensor__printTensor(self)
       table.insert(strt, '.,.) = \n')
       table.insert(strt, Tensor__printMatrix(tensor, ' '))
    end
-   local str = table.concat(strt)
-   return str
+   return table.concat(strt)
 end
 
 function Tensor.__tostring__(self)
-   local str = '\n'
    local strt = {''}
    if self:nDimension() == 0 then
       table.insert(strt, '[' .. torch.typename(self) .. ' with no dimension]\n')
@@ -193,7 +201,7 @@ function Tensor.__tostring__(self)
       local tensor = torch.DoubleTensor():resize(self:size()):copy(self)
       if tensor:nDimension() == 1 then
          local format,scale,sz = Storage__printformat(tensor:storage())
-	 if format:sub(2,4) == 'nan' then format = '%f' end
+         if format:sub(2,4) == 'nan' then format = '%f' end
          if scale then
             table.insert(strt, string.format('%g', scale) .. ' *\n')
             for i = 1,tensor:size(1) do
@@ -204,13 +212,13 @@ function Tensor.__tostring__(self)
                table.insert(strt, string.format(format, tensor[i]) .. '\n')
             end
          end
-         table.insert(strt, '[' .. torch.typename(self) .. ' of dimension ' .. tensor:size(1) .. ']\n')
+         table.insert(strt, '[' .. torch.typename(self) .. ' of size ' .. tensor:size(1) .. ']\n')
       elseif tensor:nDimension() == 2 then
          table.insert(strt, Tensor__printMatrix(tensor))
-         table.insert(strt, '[' .. torch.typename(self) .. ' of dimension ' .. tensor:size(1) .. 'x' .. tensor:size(2) .. ']\n')
+         table.insert(strt, '[' .. torch.typename(self) .. ' of size ' .. tensor:size(1) .. 'x' .. tensor:size(2) .. ']\n')
       else
          table.insert(strt, Tensor__printTensor(tensor))
-         table.insert(strt, '[' .. torch.typename(self) .. ' of dimension ')
+         table.insert(strt, '[' .. torch.typename(self) .. ' of size ')
          for i=1,tensor:nDimension() do
             table.insert(strt, tensor:size(i))
             if i ~= tensor:nDimension() then
@@ -220,8 +228,7 @@ function Tensor.__tostring__(self)
          table.insert(strt, ']\n')
       end
    end
-   local str = table.concat(strt)
-   return str
+   return table.concat(strt)
 end
 
 function Tensor.type(self,type)
@@ -274,13 +281,20 @@ function Tensor.real(self)
    return self:type(torch.getdefaulttensortype())
 end
 
-function Tensor.expand(tensor,...)
+function Tensor.expand(result,tensor,...)
    -- get sizes
    local sizes = {...}
 
+   local t = torch.type(tensor)
+   if (t == 'number' or t == 'torch.LongStorage') then
+      table.insert(sizes,1,tensor)
+      tensor = result
+      result = tensor.new()
+   end
+
    -- check type
    local size
-   if torch.typename(sizes[1]) and torch.typename(sizes[1])=='torch.LongStorage' then
+   if torch.type(sizes[1])=='torch.LongStorage' then
       size = sizes[1]
    else
       size = torch.LongStorage(#sizes)
@@ -310,24 +324,36 @@ function Tensor.expand(tensor,...)
    end
 
    -- create new view, with singleton expansion:
-   tensor = tensor.new(tensor:storage(), tensor:storageOffset(),
+   result:set(tensor:storage(), tensor:storageOffset(),
                          tensor_size, tensor_stride)
-   return tensor
+   return result
 end
 torch.expand = Tensor.expand
 
-function Tensor.expandAs(tensor,template)
-   return tensor:expand(template:size())
+function Tensor.expandAs(result,tensor,template)
+   if template then
+      return result:expand(tensor,template:size())
+   end
+   return result:expand(tensor:size())
 end
 torch.expandAs = Tensor.expandAs
 
-function Tensor.repeatTensor(tensor,...)
+function Tensor.repeatTensor(result,tensor,...)
    -- get sizes
    local sizes = {...}
 
+   local t = torch.type(tensor)
+   if (t == 'number' or t == 'torch.LongStorage') then
+      table.insert(sizes,1,tensor)
+      tensor = result
+      result = tensor.new()
+   end
+   -- if not contiguous, then force the tensor to be contiguous
+   if not tensor:isContiguous() then tensor = tensor:clone() end
+
    -- check type
    local size
-   if torch.typename(sizes[1]) and torch.typename(sizes[1])=='torch.LongStorage' then
+   if torch.type(sizes[1])=='torch.LongStorage' then
       size = sizes[1]
    else
       size = torch.LongStorage(#sizes)
@@ -345,8 +371,8 @@ function Tensor.repeatTensor(tensor,...)
    end
    size = torch.DoubleTensor(xsize):cmul(torch.DoubleTensor(size:totable())):long():storage()
    xtensor:resize(torch.LongStorage(xsize))
-   local rtensor = tensor.new():resize(size)
-   local urtensor = rtensor.new(rtensor)
+   result:resize(size)
+   local urtensor = result.new(result)
    for i=1,xtensor:dim() do
       urtensor = urtensor:unfold(i,xtensor:size(i),xtensor:size(i))
    end
@@ -356,9 +382,176 @@ function Tensor.repeatTensor(tensor,...)
    xtensor:resize(torch.LongStorage(xsize))
    local xxtensor = xtensor:expandAs(urtensor)
    urtensor:copy(xxtensor)
-   return rtensor
+   return result
 end
 torch.repeatTensor = Tensor.repeatTensor
+
+--- One of the size elements can be -1,
+ --- a new LongStorage is then returned.
+ --- The length of the unspecified dimension
+ --- is inferred from the number of remaining elements.
+local function specifyFully(size, nElements)
+    local nCoveredElements = 1
+    local remainingDim = nil
+    local sizes = size:totable()
+    for i = 1, #sizes do
+        local wantedDimSize = sizes[i]
+        if wantedDimSize == -1 then
+            if remainingDim then
+                error("Only one of torch.view dimensions can be -1.")
+            end
+            remainingDim = i
+        else
+            nCoveredElements = nCoveredElements * wantedDimSize
+        end
+    end
+
+    if not remainingDim then
+        return size
+    end
+
+    assert(nElements % nCoveredElements == 0, "The number of covered elements is not a multiple of all elements.")
+    local copy = torch.LongStorage(sizes)
+    copy[remainingDim] = nElements / nCoveredElements
+    return copy
+end
+
+-- TODO : This should be implemented in TH and and wrapped.
+function Tensor.view(result, src, ...)
+   local size = ...
+   local view, tensor
+   local function istensor(tensor)
+      return torch.typename(tensor) and torch.typename(tensor):find('torch.*Tensor')
+   end
+   local function isstorage(storage)
+      return torch.typename(storage) and torch.typename(storage) == 'torch.LongStorage'
+   end
+   if istensor(result) and istensor(src) and type(size) == 'number' then
+      size = torch.LongStorage{...}
+      view = result
+      tensor = src
+   elseif istensor(result) and istensor(src) and isstorage(size) then
+      size = size
+      view = result
+      tensor = src
+   elseif istensor(result) and isstorage(src) and size == nil then
+      size = src
+      tensor = result
+      view = tensor.new()
+   elseif istensor(result) and type(src) == 'number' then
+      size = {...}
+      table.insert(size,1,src)
+      size = torch.LongStorage(size)
+      tensor = result
+      view = tensor.new()
+   else
+      local t1 = 'torch.Tensor, torch.Tensor, number [, number ]*'
+      local t2 = 'torch.Tensor, torch.Tensor, torch.LongStorage'
+      local t3 = 'torch.Tensor, torch.LongStorage'
+      local t4 = 'torch.Tensor, number [, number ]*'
+      error(string.format('torch.view, expected (%s) or\n (%s) or\n (%s)\n or (%s)', t1, t2, t3, t4))
+   end
+   local origNElement = tensor:nElement()
+   size = specifyFully(size, origNElement)
+
+   assert(tensor:isContiguous(), "expecting a contiguous tensor")
+   view:set(tensor:storage(), tensor:storageOffset(), size)
+   if view:nElement() ~= origNElement then
+      local inputSize = table.concat(tensor:size():totable(), "x")
+      local outputSize = table.concat(size:totable(), "x")
+      error(string.format("Wrong size for view. Input size: %s. Output size: %s",
+      inputSize, outputSize))
+   end
+   return view
+end
+torch.view = Tensor.view
+
+function Tensor.viewAs(result, src, template)
+   if template and torch.typename(template) then
+      return result:view(src, template:size())
+   elseif template == nil then
+      template = src
+      src = result
+      result = src.new()
+      return result:view(src, template:size())
+   else
+      local t1 = 'torch.Tensor, torch.Tensor, torch.LongStorage'
+      local t2 = 'torch.Tensor, torch.LongStorage'
+      error(string.format('expecting (%s) or (%s)', t1, t2))
+   end
+end
+torch.viewAs = Tensor.viewAs
+
+function Tensor.split(result, tensor, splitSize, dim)
+   if torch.type(result) ~= 'table' then
+      dim = splitSize
+      splitSize = tensor
+      tensor = result
+      result = {}
+   else
+      -- empty existing result table before using it
+      for k,v in pairs(result) do
+         result[k] = nil
+      end
+   end
+   dim = dim or 1
+   local start = 1
+   while start <= tensor:size(dim) do
+      local size = math.min(splitSize, tensor:size(dim) - start + 1)
+      local split = tensor:narrow(dim, start, size)
+      table.insert(result, split)
+      start = start + size
+   end
+   return result
+end
+torch.split = Tensor.split
+
+function Tensor.chunk(result, tensor, nChunk, dim)
+   if torch.type(result) ~= 'table' then
+      dim = nChunk
+      nChunk = tensor
+      tensor = result
+      result = {}
+   end
+   dim = dim or 1
+   local splitSize = math.ceil(tensor:size(dim)/nChunk)
+   return torch.split(result, tensor, splitSize, dim)
+end
+torch.chunk = Tensor.chunk
+
+function Tensor.totable(tensor)
+  local result = {}
+  local dim = tensor:dim()
+  if dim == 1 then
+    tensor:apply(function(i) table.insert(result, i) end)
+  elseif dim > 0 then
+    for i = 1, tensor:size(1) do
+      table.insert(result, tensor[i]:totable())
+    end
+  end
+  return result
+end
+torch.totable = Tensor.totable
+
+function Tensor.permute(tensor, ...)
+  local perm = {...}
+  local nDims = tensor:dim()
+  assert(#perm == nDims, 'Invalid permutation')
+  local j
+  for i, p in ipairs(perm) do
+    if p ~= i and p ~= 0 then
+      j = i
+      repeat
+        assert(0 < perm[j] and perm[j] <= nDims, 'Invalid permutation')
+        tensor = tensor:transpose(j, perm[j])
+        j, perm[j] = perm[j], 0
+      until perm[j] == i
+      perm[j] = j
+    end
+  end
+  return tensor
+end
+torch.permute = Tensor.permute
 
 for _,type in ipairs(types) do
    local metatable = torch.getmetatable('torch.' .. type .. 'Tensor')
