@@ -46,6 +46,10 @@ function Linear:updateOutput(input)
       error('input must be vector or matrix')
    end
 
+	print('#### linear out ####')
+	print(self.output)
+	print('#### end linear out ####')
+
    return self.output
 end
 
