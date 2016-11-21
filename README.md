@@ -4,6 +4,11 @@ Noranart Vesdapunt (nvesdapu)
 ##Summary:
 An attempt to port pedestrian detection model into iOS. The model will be compressed by Knowledge Distillation [1] from ResNet [2] to small manually-designed network. The deep learning framework is based on torch-ios [4].
 
+##Installation:
+For Deep Learning Kit, please convert /models/student_iter_42000.caffemodel	to student.json by https://github.com/DeepLearningKit/caffemodel2json (the file size will be 10x).
+
+For pedestrian_detection_ios/mac, please add opencv framework and torch framework to the project directory. Torch framework can be built by /torch-ios/generate_ios_framework.
+
 ##Background:
 Deep learning in iOS is still an ongoing research area due to the large and slow model. However, with Knowledge Distillation technique, it is possible to train a smaller Student model to mimic a large Teacher model. The idea is to extract soft target from Teacher model to provide as a guidance. These soft targets will act as extra labels and improve Student model performance. Moreover, Student model will be trained with both soft and hard target (ground truth), which provides a chance to correct Teacher mistakes. 
 
