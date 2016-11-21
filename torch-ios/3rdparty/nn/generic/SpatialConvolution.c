@@ -9,7 +9,6 @@ static int nn_(SpatialConvolution_updateOutput)(lua_State *L)
   int dH = luaT_getfieldcheckint(L, 1, "dH");
 
   THTensor *weight = luaT_getfieldcheckudata(L, 1, "weight", torch_Tensor);
-  THTensor *bias = luaT_getfieldcheckudata(L, 1, "bias", torch_Tensor);
   THTensor *output = luaT_getfieldcheckudata(L, 1, "output", torch_Tensor);
 
   int dimw = 2;
@@ -34,23 +33,21 @@ static int nn_(SpatialConvolution_updateOutput)(lua_State *L)
     if (input->nDimension == 3)
     {
       long i;
-      real* bias_data;
       real* output_data;
 
       THTensor_(resize3d)(output, nOutputPlane, outputHeight, outputWidth);
       /* add bias */
-      bias_data = THTensor_(data)(bias);
       output_data = THTensor_(data)(output);
 
 #pragma omp parallel for private(i)
-      for (i=0; i<bias->size[0]; i++)
+      for (i=0; i<weight->size[0]; i++)
       {
         /*THTensor_(select)(outn,output,0,i);*/
         /*TH_TENSOR_APPLY(real,outn, *outn_data = bias_data[i];);*/
         real *ptr_output = output_data + i*outputWidth*outputHeight;
         long j;
         for(j = 0; j < outputWidth*outputHeight; j++)
-          ptr_output[j] = bias_data[i];
+          ptr_output[j] = 0;
       }
       /*THTensor_(free)(outn);*/
       
@@ -59,13 +56,11 @@ static int nn_(SpatialConvolution_updateOutput)(lua_State *L)
     }
     else
     {
-      real* bias_data;
-      real* output_data; 
+      real* output_data;
       long p;
 
       THTensor_(resize4d)(output, input->size[0], nOutputPlane, outputHeight, outputWidth);
       
-      bias_data = THTensor_(data)(bias);
       output_data = THTensor_(data)(output);
       
 #pragma omp parallel for private(p)
@@ -73,12 +68,12 @@ static int nn_(SpatialConvolution_updateOutput)(lua_State *L)
       {
         /* BIAS */
         long i;
-        for (i=0; i<bias->size[0]; i++)
+        for (i=0; i<weight->size[0]; i++)
         {
           real *ptr_output = output_data + p*nOutputPlane*outputWidth*outputHeight + i*outputWidth*outputHeight;
           long j;
           for(j = 0; j < outputWidth*outputHeight; j++)
-            ptr_output[j] = bias_data[i];
+            ptr_output[j] = 0;
         }
       }
       
